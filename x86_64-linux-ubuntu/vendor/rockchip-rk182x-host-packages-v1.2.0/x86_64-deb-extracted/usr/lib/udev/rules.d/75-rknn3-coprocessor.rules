@@ -1,0 +1,1 @@
+SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="2207", ATTR{idProduct}=="180b", TAG+="systemd", ENV{SYSTEMD_WANTS}+="rknn3_usb_startup@%k.service"

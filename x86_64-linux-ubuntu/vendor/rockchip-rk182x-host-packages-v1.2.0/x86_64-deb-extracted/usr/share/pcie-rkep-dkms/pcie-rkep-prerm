@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+PKG="pcie-rkep"
+VER="3.3.1"
+KVER="$(uname -r)"
+modprobe -r "$PKG" 2>/dev/null || true
+if [ -n "$VER" ]; then
+	dkms remove -m "$PKG" -v "$VER" --all 2>/dev/null || true
+else
+	dkms remove -m "$PKG" --all 2>/dev/null || true
+fi
+find "/lib/modules/$KVER" -name "$PKG.ko" -delete 2>/dev/null || true
+rm -f "/etc/modules-load.d/$PKG.conf" "/etc/kernel/postinst.d/zz-$PKG" 2>/dev/null || true
+sed -i "/^$PKG$/d" /etc/modules 2>/dev/null || true
+find /lib/modules -maxdepth 1 -name "$PKG.ko" -delete 2>/dev/null || true
+echo "$PKG/$VER removed."

@@ -1,0 +1,22 @@
+# kernel module build artifacts
+*.ko
+*.o
+*.mod
+*.mod.c
+*.cmd
+.*.cmd
+Module.symvers
+modules.order
+.tmp_versions/
+# tools
+x86_64-linux-ubuntu/tools/rk-smi/rk-smi
+__pycache__/
+# runtime logs
+x86_64-linux-ubuntu/run/
+# model weights (download with scripts/download-models.sh); keep recorded checksums
+x86_64-linux-ubuntu/models/*
+!x86_64-linux-ubuntu/models/checksums/
+!x86_64-linux-ubuntu/models/README.md
+# example build dirs
+x86_64-linux-ubuntu/vendor/rknn3-toolkit-v1.2.0-x86_64/examples/*/build/
+x86_64-linux-ubuntu/vendor/rknn3-toolkit-v1.2.0-x86_64/examples/*/install/

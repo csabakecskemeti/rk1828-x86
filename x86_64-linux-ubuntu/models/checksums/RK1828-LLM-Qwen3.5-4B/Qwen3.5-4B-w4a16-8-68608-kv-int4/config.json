@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "model_id": "RKNNAI/RK1828-LLM-Qwen3.5-4B",
+  "display_name": "RK1828-LLM-Qwen3.5-4B",
+  "model_name": "Qwen3.5-4B",
+  "source_model": "Qwen/Qwen3.5-4B",
+  "source_revision": null,
+  "release_tag": "v1.1.0",
+  "rknn_version": "1.1.1a1",
+  "chip_label": "RK1828",
+  "supported_chips": [
+    "RK1828"
+  ],
+  "model_type": "LLM",
+  "models": [
+    {
+      "model_name": "llm",
+      "context_length": 68608,
+      "kv_cache_quantization": "int4",
+      "npu_cores": 8,
+      "quantization": "w4a16",
+      "quantization_algorithm": "grq",
+      "onnx_prequantization_algorithm": "grq",
+      "rknn_export_quantization_algorithm": "normal",
+      "quantization_method": "group32",
+      "quantization_provenance": "User confirmed input ONNX was GRQ-prequantized; RKNN export uses normal."
+    }
+  ],
+  "special_config": "kv-int4",
+  "validated_at": "2026-09-22",
+  "files": [
+    "Qwen3.5-4B.embed.bin",
+    "Qwen3.5-4B.rknn",
+    "Qwen3.5-4B.tokenizer.gguf",
+    "Qwen3.5-4B.weight",
+    "README.md",
+    "SHA256SUMS",
+    "config.json",
+    "model_report.html",
+    "README_CN.md"
+  ],
+  "source_revision_status": "Immutable upstream revision not recorded in this configuration artifacts; not inherited from a different configuration.",
+  "compiler_version": "rknn3-toolkit 1.1.1a1(7d35c8ebd@2026-09-08T09:49:01)",
+  "validation_scope": "RK1828 C demo; input 128 tokens, output 128 tokens, 5 loops. Not a full-context-length accuracy test."
+}

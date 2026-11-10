@@ -1,0 +1,66 @@
+--- rockchip-original/pcie-rkep.c	2026-11-09 20:28:01.456074155 -0800
++++ pcie-rkep.c	2026-11-09 20:28:01.445200407 -0800
+@@ -6,6 +6,12 @@
+  */
+ 
+ #include <linux/module.h>
++#include <linux/version.h>
++
++/* x86 port: PCI_IRQ_LEGACY was renamed PCI_IRQ_INTX in newer kernels */
++#ifndef PCI_IRQ_INTX
++#define PCI_IRQ_INTX PCI_IRQ_LEGACY
++#endif
+ #include <linux/kernel.h>
+ #include <linux/types.h>
+ #include <linux/fs.h>
+@@ -22,15 +28,15 @@
+ #include <linux/interrupt.h>
+ #include <linux/iopoll.h>
+ 
+-#include <uapi/linux/rk-pcie-ep.h>
++#include "uapi/linux/rk-pcie-ep.h"
+ #ifdef CONFIG_PCIEASPM_EXT
+ #include <linux/aspm_ext.h>
+ #endif
+ 
+-#include "../../pci/controller/rockchip-pcie-dma.h"
+-#include "../../pci/controller/dwc/pcie-dw-dmatest.h"
+-#if IS_MODULE(CONFIG_PCIE_FUNC_RKEP) && IS_ENABLED(CONFIG_PCIE_DW_DMATEST)
+-#include "../../pci/controller/dwc/pcie-dw-dmatest.c"
++#include "rockchip-pcie-dma.h"
++#include "pcie-dw-dmatest.h"
++#if 1 /* out-of-tree: always bundle dmatest */
++#include "pcie-dw-dmatest.c"
+ #endif
+ 
+ #define DRV_NAME "pcie-rkep"
+@@ -1595,7 +1601,7 @@
+ 	init_waitqueue_head(&pcie_rkep->wq_head);
+ 	ret = pcie_rkep_request_irq(pcie_rkep, PCI_IRQ_MSI);
+ 	if (ret) {
+-		ret = pcie_rkep_request_irq(pcie_rkep, PCI_IRQ_LEGACY);
++		ret = pcie_rkep_request_irq(pcie_rkep, PCI_IRQ_INTX);
+ 		if (ret)
+ 			goto err_register_irq;
+ 	}
+@@ -1761,4 +1767,9 @@
+ 
+ MODULE_DESCRIPTION("Rockchip pcie-rkep demo function driver");
+ MODULE_LICENSE("GPL");
++/* x86 port: MODULE_IMPORT_NS takes a string literal since 6.13 */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 13, 0)
++MODULE_IMPORT_NS("VFS_internal_I_am_really_a_filesystem_and_am_NOT_a_driver");
++#else
+ MODULE_IMPORT_NS(VFS_internal_I_am_really_a_filesystem_and_am_NOT_a_driver);
++#endif
+--- rockchip-original/pcie-dw-dmatest.c	2026-11-09 20:28:01.457488397 -0800
++++ pcie-dw-dmatest.c	2026-11-09 20:28:01.445253469 -0800
+@@ -17,7 +17,7 @@
+ #include <linux/dma-mapping.h>
+ 
+ #include "pcie-dw-dmatest.h"
+-#include "../rockchip-pcie-dma.h"
++#include "rockchip-pcie-dma.h"
+ 
+ static int test_size = 0x20;
+ module_param_named(size,  test_size, int, 0644);

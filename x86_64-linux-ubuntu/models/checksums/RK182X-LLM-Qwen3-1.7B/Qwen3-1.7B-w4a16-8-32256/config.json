@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "model_id": "RKNNAI/RK182X-LLM-Qwen3-1.7B",
+  "display_name": "RK182X-LLM-Qwen3-1.7B",
+  "model_name": "Qwen3-1.7B",
+  "source_model": "Qwen/Qwen3-1.7B",
+  "source_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+  "release_tag": "v1.1.0",
+  "rknn_version": "1.1.0",
+  "chip_label": "RK182X",
+  "supported_chips": [
+    "RK1828"
+  ],
+  "model_type": "LLM",
+  "models": [
+    {
+      "model_name": "llm",
+      "context_length": 32256,
+      "kv_cache_quantization": "fp16",
+      "npu_cores": 8,
+      "quantization": "w4a16",
+      "quantization_algorithm": "grq"
+    }
+  ],
+  "special_config": null,
+  "validated_at": null,
+  "files": [
+    "Qwen3-1.7B.embed.bin",
+    "Qwen3-1.7B.rknn",
+    "Qwen3-1.7B.tokenizer.gguf",
+    "Qwen3-1.7B.weight",
+    "model_report.html",
+    "README.md",
+    "config.json",
+    "SHA256SUMS",
+    "README_CN.md"
+  ],
+  "runtime_version_confirmation": "User confirmed all configurations were validated with Runtime 1.1.0 on 2026-09-20."
+}

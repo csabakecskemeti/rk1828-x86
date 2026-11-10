@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "model_id": "RKNNAI/RK1828-LLM-Qwen3-8B",
+  "display_name": "RK1828-LLM-Qwen3-8B",
+  "model_name": "Qwen3-8B",
+  "source_model": "Qwen/Qwen3-8B",
+  "source_revision": "b968826d9c46dd6066d109eabc6255188de91218",
+  "release_tag": "v1.1.0",
+  "rknn_version": "1.1.0",
+  "chip_label": "RK1828",
+  "supported_chips": [
+    "RK1828"
+  ],
+  "model_type": "LLM",
+  "models": [
+    {
+      "model_name": "llm",
+      "context_length": 6144,
+      "kv_cache_quantization": "int4",
+      "npu_cores": 8,
+      "quantization": "w4a16",
+      "quantization_algorithm": "grq"
+    }
+  ],
+  "special_config": null,
+  "validated_at": null,
+  "files": [
+    "Qwen3-8B.embed.bin",
+    "Qwen3-8B.rknn",
+    "Qwen3-8B.tokenizer.gguf",
+    "Qwen3-8B.weight",
+    "model_report.html",
+    "README.md",
+    "config.json",
+    "SHA256SUMS",
+    "README_CN.md"
+  ],
+  "runtime_version_confirmation": "User confirmed all configurations were validated with Runtime 1.1.0 on 2026-09-20."
+}

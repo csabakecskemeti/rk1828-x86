@@ -1,0 +1,15 @@
+[Unit]
+Description=RKNN3 runtime and RK182X firmware loader
+After=systemd-udevd.service
+
+[Service]
+Type=simple
+RuntimeDirectory=rknn3
+Environment=RKNN3_NETWORK_SOCKET_FILE=/tmp/rk-mdns.ini
+ExecStartPre=-rknn3_startup
+ExecStart=rknn3_transfer_proxy
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

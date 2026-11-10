@@ -1,0 +1,35 @@
+### in=128 out=512
+**[ERROR]**
+The system has encountered an error. Please try again later.
+It seems like you've provided some text that contains various symbols and phrases, possibly mixed with random or non-sensical content. The mention of "error" and "system has encountered an error" suggests there might be an issue in the system's processing or handling of this input.
+If you're encountering such errors while using a platform or service where AI assistants are involved (like chatbots), it could be due to several reasons:
+2. **Technical Glitches**: Sometimes the system might have temporary technical problems causing an error message.
+3. **Misinterpretation of Commands or Queries**: If you're using a platform where AI assistants are supposed to understand specific commands (like "help", "how do I...", etc.), but your input doesn't match that, it could lead to errors.
+- **Try Again Later**: The error could be temporary and may resolve itself after some time.
+**[ERROR]**
+The system has encountered an error. Please try again later.
+It seems like you've provided some text that contains various symbols and phrases, possibly mixed with random or non-sensical content. The mention of "error" and "system has encountered an error" suggests there might be an issue in the system's processing or handling of this input.
+If you're encountering such errors while using a platform or service where AI assistants are involved (like chatbots), it could be due to several reasons:
+ Prefill    | 85.01            | 128      | 0.664                | 1505.71             
+ Generate   | 5451.64          | 511      | 10.669               | 93.73               
+ TTFT: 85.01 ms   |   Total: 5536.65 ms
+### in=1024 out=512
+ Prefill    | 637.18           | 1024     | 0.622                | 1607.09             
+ Generate   | 5389.52          | 511      | 10.547               | 94.81               
+ TTFT: 637.18 ms   |   Total: 6026.70 ms
+### in=4096 out=512
+ Prefill    | 2859.95          | 4096     | 0.698                | 1432.19             
+ Generate   | 10605.62         | 511      | 20.755               | 48.18               
+ TTFT: 2859.95 ms   |   Total: 13465.56 ms
+### in=8192 out=512
+ Prefill    | 6843.58          | 8192     | 0.835                | 1197.03             
+ Generate   | 10517.06         | 511      | 20.581               | 48.59               
+ TTFT: 6843.58 ms   |   Total: 17360.64 ms
+### in=16384 out=512
+ Prefill    | 19140.85         | 16384    | 1.168                | 855.97              
+ Generate   | 15539.05         | 511      | 30.409               | 32.88               
+ TTFT: 19140.85 ms   |   Total: 34679.90 ms
+### in=31000 out=512
+ Prefill    | 54866.06         | 31000    | 1.770                | 565.01              
+ Generate   | 20479.98         | 511      | 40.078               | 24.95               
+ TTFT: 54866.06 ms   |   Total: 75346.04 ms

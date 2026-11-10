@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0",
+  "model_id": "RKNNAI/RK1828-VLM-Qwen3.5-4B",
+  "display_name": "RK1828-VLM-Qwen3.5-4B",
+  "model_name": "Qwen3.5-4B",
+  "source_model": "Qwen/Qwen3.5-4B",
+  "source_revision": "fcb1a040bb418b0b8add6f6f6c475386abc2cb97",
+  "release_tag": "v1.1.0",
+  "rknn_version": "1.1.0",
+  "chip_label": "RK1828",
+  "supported_chips": [
+    "RK1828"
+  ],
+  "model_type": "VLM",
+  "models": [
+    {
+      "model_name": "vision",
+      "resolution": "384x384",
+      "npu_cores": 8,
+      "quantization": "w4a16",
+      "quantization_algorithm": "grq"
+    },
+    {
+      "model_name": "llm",
+      "context_length": 68096,
+      "kv_cache_quantization": "int4",
+      "npu_cores": 8,
+      "quantization": "w4a16",
+      "quantization_algorithm": "grq"
+    }
+  ],
+  "special_config": null,
+  "validated_at": "2026-09-03",
+  "files": [
+    "Qwen3.5-4B-llm.rknn",
+    "Qwen3.5-4B-llm.weight",
+    "Qwen3.5-4B-vision.rknn",
+    "Qwen3.5-4B-vision.weight",
+    "Qwen3.5-4B.embed.bin",
+    "Qwen3.5-4B.tokenizer.gguf",
+    "llm_model_report.html",
+    "vision_model_report.html",
+    "README.md",
+    "config.json",
+    "SHA256SUMS",
+    "README_CN.md"
+  ],
+  "runtime_version_confirmation": "User confirmed all configurations were validated with Runtime 1.1.0 on 2026-09-20."
+}

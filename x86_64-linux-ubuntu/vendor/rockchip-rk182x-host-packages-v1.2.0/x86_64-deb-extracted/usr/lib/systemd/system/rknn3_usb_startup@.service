@@ -1,0 +1,8 @@
+[Unit]
+Description=Flash RK182X firmware on USB loader %i
+After=systemd-udevd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/rknn3-rk182x/rknn3_usb_startup %i
+TimeoutStartSec=180

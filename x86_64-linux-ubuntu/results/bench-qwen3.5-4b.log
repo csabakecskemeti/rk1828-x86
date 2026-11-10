@@ -1,0 +1,28 @@
+### real prompt
+> In three sentences: why is memory bandwidth the bottleneck for LLM token generation?
+Large Language Models require massive amounts of data to be fetched from memory for every single token generated, creating a significant demand that often exceeds the speed at which hardware can supply it. Unlike traditional computing tasks where calculation is usually faster than data movement, LLM inference spends most of its time waiting for weights and activations to travel across high-bandwidth memory buses rather than performing arithmetic operations. Consequently, this "memory wall" forces systems to spend a disproportionate amount of computational resources simply retrieving information from RAM or HBM, making bandwidth the primary constraint on generation speed.
+wall 28.67s
+### in=128 out=512
+ Prefill    | 187.85           | 128      | 1.468                | 681.38              
+ Generate   | 15840.87         | 511      | 31.000               | 32.26               
+ TTFT: 187.85 ms   |   Total: 16028.72 ms
+### in=1024 out=512
+ Prefill    | 1348.44          | 1024     | 1.317                | 759.39              
+ Generate   | 15566.02         | 511      | 30.462               | 32.83               
+ TTFT: 1348.44 ms   |   Total: 16914.46 ms
+### in=4096 out=512
+ Prefill    | 5554.13          | 4096     | 1.356                | 737.47              
+ Generate   | 15370.40         | 511      | 30.079               | 33.25               
+ TTFT: 5554.13 ms   |   Total: 20924.54 ms
+### in=16384 out=512
+ Prefill    | 25416.51         | 16384    | 1.551                | 644.62              
+ Generate   | 15614.00         | 511      | 30.556               | 32.73               
+ TTFT: 25416.51 ms   |   Total: 41030.51 ms
+### in=32768 out=512
+ Prefill    | 59354.39         | 32768    | 1.811                | 552.07              
+ Generate   | 15411.00         | 511      | 30.159               | 33.16               
+ TTFT: 59354.39 ms   |   Total: 74765.39 ms
+### in=65536 out=512
+ Prefill    | 152928.84        | 65536    | 2.334                | 428.54              
+ Generate   | 20608.28         | 511      | 40.329               | 24.80               
+ TTFT: 152928.84 ms   |   Total: 173537.12 ms

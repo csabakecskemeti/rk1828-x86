@@ -1,0 +1,15 @@
+[Unit]
+Description=Rockchip mDNS Device Discovery
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=rknn-mdns -t /tmp/rk-mdns.ini -s 15
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

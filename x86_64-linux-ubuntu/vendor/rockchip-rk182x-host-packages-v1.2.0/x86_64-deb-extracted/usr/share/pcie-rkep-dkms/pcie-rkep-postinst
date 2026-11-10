@@ -1,0 +1,109 @@
+#!/bin/bash
+set -e
+PKG="pcie-rkep"
+VER="3.3.1"
+[ -n "$VER" ] || { echo "ERROR: pcie-rkep package version is empty" >&2; exit 1; }
+KVER="$(uname -r)"
+MODDIR="/lib/modules/$KVER"
+SRCDIR="/usr/src/$PKG-$VER"
+[ -d "$SRCDIR" ] || { echo "ERROR: source directory $SRCDIR not found" >&2; exit 1; }
+echo "=== pcie-rkep installer (kernel $KVER) ==="
+
+case "$(uname -m)" in
+	aarch64) KARCH=arm64 ;;
+	x86_64)  KARCH=x86 ;;
+	*)       KARCH="$(uname -m)" ;;
+esac
+
+if ls /lib/modules/*.ko >/dev/null 2>&1 && [ ! -f "$MODDIR/modules.builtin" ]; then
+	MODE="rkflat";   echo "Mode: RK-FLAT (RK Debian: flat .ko, no modules.builtin)"
+else
+	MODE="standard"; echo "Mode: STANDARD (Debian/Ubuntu)"
+fi
+
+if command -v dkms >/dev/null 2>&1; then
+	ENGINE="dkms"; echo "Engine: DKMS"
+else
+	ENGINE="direct"; echo "Engine: DIRECT (dkms not available)"
+	command -v make >/dev/null 2>&1 || { echo "ERROR: make not found (apt install make)"; exit 1; }
+	command -v gcc  >/dev/null 2>&1 || { echo "ERROR: gcc not found (apt install gcc)";  exit 1; }
+fi
+
+ensure_kbuild() {
+	local link="$MODDIR/build"
+	[ -d "$link" ] && return 0
+	local hdr=""
+	for cand in \
+		"/usr/src/linux-headers-$KVER" \
+		/usr/src/linux-headers-*rockchip* \
+		/usr/src/linux-headers-*; do
+		for d in $cand; do
+			[ -d "$d" ] && { hdr="$(readlink -f "$d")"; break 2; } || true
+		done
+	done
+	if [ -z "$hdr" ]; then
+		echo "ERROR: kernel headers not found." >&2
+		echo "  standard: apt install linux-headers-$KVER" >&2
+		echo "  RK:       need /usr/src/linux-headers-*rockchip*" >&2
+		exit 1
+	fi
+	mkdir -p "$MODDIR"
+	ln -sfn "$hdr" "$link"
+	echo "Linked $link -> $hdr"
+}
+ensure_kbuild
+
+modprobe -r "$PKG" 2>/dev/null || true
+find /lib/modules -maxdepth 1 -name "$PKG.ko" -delete 2>/dev/null || true
+rm -f "/usr/lib/modules/$PKG.ko" 2>/dev/null || true
+
+if [ "$ENGINE" = "dkms" ]; then
+	dkms remove -m "$PKG" -v "$VER" --all 2>/dev/null || true
+	dkms add -m "$PKG" -v "$VER" || { echo "ERROR: dkms add failed"; exit 1; }
+	dkms build -m "$PKG" -v "$VER" -k "$KVER" || \
+		{ echo "ERROR: dkms build failed, cleaning up"; dkms remove -m "$PKG" -v "$VER" --all 2>/dev/null || true; exit 1; }
+	dkms install -m "$PKG" -v "$VER" -k "$KVER" || \
+		{ echo "ERROR: dkms install failed, cleaning up"; dkms remove -m "$PKG" -v "$VER" --all 2>/dev/null || true; exit 1; }
+else
+	echo "Direct compile against $(readlink -f "$MODDIR/build") ..."
+	make -C "$SRCDIR" KERNELDIR="$MODDIR/build" ARCH="$KARCH" clean 2>/dev/null || true
+	make -C "$SRCDIR" KERNELDIR="$MODDIR/build" ARCH="$KARCH" modules
+	[ -f "$SRCDIR/$PKG.ko" ] || { echo "ERROR: build did not produce $PKG.ko"; exit 1; }
+	mkdir -p "$MODDIR/extra"
+	cp -f "$SRCDIR/$PKG.ko" "$MODDIR/extra/"
+fi
+depmod -a "$KVER" 2>/dev/null || true
+
+if [ "$MODE" = "rkflat" ]; then
+	BUILT_KO="$(find "$MODDIR" -name "$PKG.ko" -print -quit 2>/dev/null || true)"
+	if [ -n "$BUILT_KO" ] && [ -f "$BUILT_KO" ]; then
+		cp -f "$BUILT_KO" "/lib/modules/$PKG.ko" && echo "Flat copy: $BUILT_KO -> /lib/modules/$PKG.ko"
+	else
+		echo "WARNING: flat ko not found, skipping flat copy"
+	fi
+fi
+
+if [ "$ENGINE" = "dkms" ] && [ "$MODE" = "rkflat" ]; then
+	cat > "/etc/kernel/postinst.d/zz-$PKG" <<'HOOK'
+#!/bin/bash
+set -e
+KVER="$1"
+[ -n "$KVER" ] || { echo "pcie-rkep: missing kernel version in hook"; exit 0; }
+KO="$(find "/lib/modules/$KVER" -name "pcie-rkep.ko" -print -quit 2>/dev/null || true)"
+if [ -n "$KO" ]; then
+	cp -f "$KO" /lib/modules/pcie-rkep.ko && echo "pcie-rkep: refreshed flat ko for $KVER"
+fi
+exit 0
+HOOK
+	chmod 0755 "/etc/kernel/postinst.d/zz-$PKG"
+	echo "RK-FLAT: kernel postinst hook installed (auto-rebuild via DKMS)"
+fi
+
+echo "$PKG" > /etc/modules-load.d/$PKG.conf 2>/dev/null || true
+grep -q "^$PKG$" /etc/modules 2>/dev/null || echo "$PKG" >> /etc/modules 2>/dev/null || true
+modprobe "$PKG" 2>/dev/null || true
+
+if [ "$ENGINE" = "direct" ]; then
+	echo "NOTE: dkms not installed - kernel updates require re-running this install."
+fi
+echo "$PKG/$VER installed ($MODE/$ENGINE). Device: /dev/pcie-rkep-*"

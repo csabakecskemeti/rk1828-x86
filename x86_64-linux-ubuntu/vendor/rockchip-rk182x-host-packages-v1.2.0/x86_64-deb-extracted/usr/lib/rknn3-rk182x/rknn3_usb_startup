@@ -1,0 +1,120 @@
+#!/bin/sh
+set -eu
+
+find_tool()
+{
+	local candidate
+	local name=$1
+
+	candidate=$(command -v "$name" 2>/dev/null || true)
+	if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+		printf '%s\n' "$candidate"
+		return 0
+	fi
+	for candidate in "/usr/bin/$name" "/bin/$name" "/usr/sbin/$name" "/sbin/$name"; do
+		[ -x "$candidate" ] || continue
+		printf '%s\n' "$candidate"
+		return 0
+	done
+	return 1
+}
+
+find_firmware()
+{
+	local candidate
+
+	for candidate in \
+		/usr/lib/firmware/rknn3_rk1820.img \
+		/lib/firmware/rknn3_rk1820.img; do
+		[ -f "$candidate" ] || continue
+		printf '%s\n' "$candidate"
+		return 0
+	done
+	return 1
+}
+
+acquire_flash_lock()
+{
+	local lock_root=/run/lock
+	local lock_tool
+
+	[ -d "$lock_root" ] || lock_root=/tmp
+	lock_tool=$(find_tool flock) || {
+		echo "flock not found; cannot serialize RK182X USB flashing" >&2
+		exit 1
+	}
+
+	# The kernel releases this advisory lock when the worker exits, including
+	# abnormal termination. The lock file may remain, but an unlocked file does
+	# not prevent a later worker from acquiring it.
+	exec 9>"$lock_root/rknn3_usb_startup.lock"
+	"$lock_tool" 9
+}
+
+device_name=${1:?missing USB sysfs device name}
+sysfs_device="/sys/bus/usb/devices/$device_name"
+firmware=$(find_firmware) || {
+	echo "RK182X firmware not found in /usr/lib/firmware or /lib/firmware" >&2
+	exit 1
+}
+upgrade_tool_path=$(find_tool upgrade_tool) || {
+	echo "upgrade_tool not found" >&2
+	exit 1
+}
+
+[ -d "$sysfs_device" ] || {
+	echo "USB device $device_name is no longer present" >&2
+	exit 0
+}
+
+vendor=$(cat "$sysfs_device/idVendor")
+product=$(cat "$sysfs_device/idProduct")
+[ "$vendor:$product" = "2207:180b" ] || {
+	echo "USB device $device_name is $vendor:$product, not an RK182X loader" >&2
+	exit 0
+}
+
+acquire_flash_lock
+
+# Another udev worker may have flashed this device while this worker waited.
+[ -d "$sysfs_device" ] || {
+	echo "USB device $device_name has already been handled"
+	exit 0
+}
+
+sleep 0.5
+if ! device_list=$("$upgrade_tool_path" ld 2>&1); then
+	printf '%s\n' "$device_list" >&2
+	echo "Cannot list RK182X USB loaders" >&2
+	exit 1
+fi
+printf '%s\n' "$device_list"
+
+location_ids=$(printf '%s\n' "$device_list" | awk '
+	/Vid=0x2207,Pid=0x180b/ && /LocationID=/ && /Mode=Maskrom/ {
+		line = $0
+		sub(/^.*LocationID=/, "", line)
+		sub(/[[:space:]].*$/, "", line)
+		print line
+	}')
+set -- $location_ids
+[ "$#" -gt 0 ] || {
+	echo "No RK182X Maskrom loader remains; another worker may have handled it"
+	exit 0
+}
+
+result=0
+for location_id do
+	case "$location_id" in
+		'' | *[!0-9a-fA-F]*)
+			echo "Invalid RK182X loader LocationID: $location_id" >&2
+			result=1
+			continue
+			;;
+	esac
+
+	echo "Loading RK182X firmware at LocationID=$location_id"
+	"$upgrade_tool_path" -s "$location_id" uf "$firmware" || result=1
+done
+
+exit "$result"

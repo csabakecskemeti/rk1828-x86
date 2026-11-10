@@ -1,0 +1,102 @@
+#!/bin/sh
+set -u
+
+result=0
+
+find_tool()
+{
+	local candidate
+	local name=$1
+
+	candidate=$(command -v "$name" 2>/dev/null || true)
+	if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+		printf '%s\n' "$candidate"
+		return 0
+	fi
+	for candidate in "/usr/bin/$name" "/bin/$name" "/usr/sbin/$name" "/sbin/$name" \
+		"/vendor/bin/$name"; do
+		[ -x "$candidate" ] || continue
+		printf '%s\n' "$candidate"
+		return 0
+	done
+	return 1
+}
+
+find_firmware()
+{
+	local candidate
+
+	for candidate in \
+		/vendor/etc/rk1820/update.img \
+		/usr/lib/firmware/rknn3_rk1820.img \
+		/lib/firmware/rknn3_rk1820.img; do
+		[ -f "$candidate" ] || continue
+		printf '%s\n' "$candidate"
+		return 0
+	done
+	return 1
+}
+
+flash_pcie_devices()
+{
+	local address
+	local device_count=0
+	local devices
+	local driver_module
+	local failed_count=0
+	local line
+	local pcie_tool
+	local success_count=0
+	local temp_dir
+
+	pcie_tool=$(find_tool pcie_upgrade_tool) || return 0
+	if [ -d /vendor/etc/rk1820 ] && [ -d /data/vendor/rknn ] && [ -w /data/vendor/rknn ]; then
+		temp_dir=/data/vendor/rknn
+	else
+		temp_dir=
+	fi
+
+	[ -w /sys/bus/pci/rescan ] && echo 1 >/sys/bus/pci/rescan || true
+	if ! find /dev -maxdepth 1 -name 'pcie-rkep-*' -print -quit | grep -q .; then
+		driver_module=$(find "$(realpath /lib/modules/)" \
+			-name pcie-rkep.ko | head -n 1)
+		if [ ! -f "$driver_module" ] || ! insmod "$driver_module"; then
+			echo "warning: failed to get pcie-rkep.ko" >&2
+		fi
+		[ -w /sys/bus/pci/rescan ] && echo 1 >/sys/bus/pci/rescan || true
+		if ! find /dev -maxdepth 1 -name 'pcie-rkep-*' -print -quit | grep -q .; then
+			echo "Failed to load driver or find device" >&2
+		fi
+	fi
+
+	devices=$("$pcie_tool" ld 2>/dev/null || true)
+	while IFS= read -r line; do
+		address=$(printf '%s\n' "$line" |
+			sed -n 's/.*Addr=\([0-9a-fA-F:.]*\).*/\1/p')
+		[ -n "$address" ] || continue
+		device_count=$((device_count + 1))
+		echo "Loading RK182X firmware over PCIe at $address"
+		if "$pcie_tool" -s "$address" uf "$firmware" -reset $temp_dir; then
+			success_count=$((success_count + 1))
+		else
+			failed_count=$((failed_count + 1))
+			echo "Failed to load RK182X firmware over PCIe at $address" >&2
+		fi
+	done <<EOF
+$devices
+EOF
+
+	if [ "$failed_count" -gt 0 ]; then
+		echo "RK182X PCIe firmware loading: $success_count succeeded, $failed_count failed" >&2
+	fi
+	if [ "$device_count" -gt 0 ] && [ "$success_count" -eq 0 ]; then
+		result=1
+	fi
+}
+
+firmware=$(find_firmware) || {
+	echo "RK182X firmware not found in /vendor/etc/rk1820/update.img or /usr/lib/firmware or /lib/firmware" >&2
+	exit 1
+}
+flash_pcie_devices
+exit "$result"

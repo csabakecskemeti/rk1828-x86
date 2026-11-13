@@ -7,6 +7,8 @@ docs and benchmark results.
 | Folder | Contents |
 |---|---|
 | [`x86_64-linux-ubuntu/`](x86_64-linux-ubuntu/) | Everything used to get it working on **x86_64 Ubuntu 26.04 (kernel 7.0)**, Nov 2026: driver, vendor binaries + firmware, scripts, docs, results. **Start with its [README](x86_64-linux-ubuntu/README.md).** |
+| [`manjaro-x86_64-linux/`](manjaro-x86_64-linux/) | Same bring-up reproduced on **Manjaro** (kernel 6.12): what differed |
+| [`orangepi5plus-arm64-ubuntu/`](orangepi5plus-arm64-ubuntu/) | The card in an **Orange Pi 5 Plus** (RK3588, Ubuntu 24.04): Rockchip's arm64 package, no driver port. **In progress** — [bring-up log](orangepi5plus-arm64-ubuntu/BRINGUP_LOG.md) |
 
 Results on one RK1828 (generation speed, all on the card):
 

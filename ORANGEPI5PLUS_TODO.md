@@ -1,5 +1,9 @@
 # Next: moving the RK1828 to an Orange Pi 5 Plus
 
+> **Started 2026-11-12.** The card is in the Orange Pi and enumerates. Questions 1–5 are answered in
+> [`orangepi5plus-arm64-ubuntu/BRINGUP_LOG.md`](orangepi5plus-arm64-ubuntu/BRINGUP_LOG.md) (§0–2), and question 8 in §3: the deb bundles the M.2 2280 image.
+> Progress is tracked there. This file is kept as the original plan.
+
 Planning notes from the 2026-11-09 Manjaro bring-up session, written down before stopping so nothing needs to
 be re-derived next time. Nothing below has been executed yet — this is what's ready, and what's still unknown.
 

@@ -191,3 +191,44 @@ matches tested build
 ```
 1.7 GB in about 40 s, with the card active. **No reset this time**, so the §5 reset doesn't reproduce simply
 from network plus SD-card load.
+
+## 8. First run: Qwen3-1.7B, all on the card ✅
+
+Using the CLI that comes with the deb (`/usr/bin/rknn3_llm_cli`), as a **normal user** (the root proxy from
+`rknn3.service` handles the device):
+
+```bash
+cd ~/rk1828
+M=models/RK182X-LLM-Qwen3-1.7B/Qwen3-1.7B-w4a16-8-32256/Qwen3-1.7B.rknn
+rknn3_llm_cli --model $M --core-mask 0xff --bench 128 128
+```
+
+| Stage | Tokens | ms/token | **tok/s** |
+|---|---:|---:|---:|
+| Prefill | 128 | 0.494 | **2022.5** |
+| Generate | 127 | 8.661 | **115.5** |
+
+TTFT 63 ms. 9 s wall time including model load (1.7 GB over the Gen2 x1 link). The board stayed up.
+Raw log: [`results/bench-qwen3-1.7b-128x128.log`](results/bench-qwen3-1.7b-128x128.log).
+
+**Comparison** (same card, same model build, same command):
+
+| Host | Prefill tok/s | Generate tok/s |
+|---|---:|---:|
+| x86 Ubuntu (Threadripper, adapter card) | 1220 | 99 |
+| x86 Manjaro (Ryzen 5 5600GT, adapter card) | 2130 | 118 |
+| **Orange Pi 5 Plus (onboard M.2)** | **2022** | **115** |
+
+A €150-class ARM board drives the card as fast as the x86 desktops. Generation runs from the card's own memory, so
+the host hardly matters once the model is loaded.
+
+The bench's generated text is nonsense (it once read "**[ERROR]** The system has encountered an error..."). That's
+the model replying to 128 dummy prompt tokens, **not a real error**. A real prompt:
+
+```
+$ rknn3_llm_cli --model $M --core-mask 0xff -n 200 --once \
+    --prompt "In two sentences: what is a Raspberry Pi-class single board computer good for?"
+A Raspberry Pi-class single board computer is good for educational and hobbyist projects, as well as simple home
+automation and embedded systems.
+```
+Raw log: [`results/prompt-qwen3-1.7b.log`](results/prompt-qwen3-1.7b.log).

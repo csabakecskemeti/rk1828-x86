@@ -14,7 +14,7 @@ driver port and no hand-built tools.
 | Driver | `pcie-rkep` ported to x86 (`x86-port.patch`) | `pcie-rkep` 3.3.1 from the arm64 deb, built by DKMS, unmodified |
 | Firmware load | `scripts/rk1828-up.sh`, by hand after every boot | `rknn3.service` from the deb, every boot |
 | CLI / server | built from the SDK example | prebuilt in the deb (`/usr/bin`) |
-| Result | ~95–118 tok/s (Qwen3-1.7B) | _pending_ |
+| Result | ~95–118 tok/s (Qwen3-1.7B) | **115 tok/s generate / 2022 tok/s prefill** (Qwen3-1.7B) |
 
 ## Status
 
@@ -26,7 +26,7 @@ driver port and no hand-built tools.
 - [ ] **Board hard-reset under load once the card was active: check power** (see log §5)
 - [x] `sudo rknn-smi info` sees the card (Online, Health OK, 45 °C idle)
 - [x] Qwen3-1.7B downloaded on the board and SHA256-verified (matches the x86 test build)
-- [ ] Bench Qwen3-1.7B (`--bench 128 128`) and compare with x86
+- [x] Bench Qwen3-1.7B (`--bench 128 128`): **115 tok/s / 2022 prefill**, on par with x86
 - [ ] `rkllm3-server` with Qwen3.5-4B + vision
 
 Step-by-step with outputs: **[`BRINGUP_LOG.md`](BRINGUP_LOG.md)**.

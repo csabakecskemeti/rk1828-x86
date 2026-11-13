@@ -22,7 +22,7 @@ be re-derived next time. Nothing below has been executed yet — this is what's 
   re-download needed.
 - **Fallback aarch64 binaries**: `rknn3-toolkit/rknn3-runtime/{rknn3_transfer_proxy/linux-aarch64,
   rknn3-server/Linux/aarch64}` from the public GitHub SDK clone, in case the deb's versions have an issue.
-- Everything in the `csabakecskemeti/rk1828-x86` repo (`manjaro-x86_64-linux/`, `x86_64-linux-ubuntu/`) as prior
+- Everything in the `csabakecskemeti/rk1828-how-to` repo (then named `rk1828-x86`) (`manjaro-x86_64-linux/`, `x86_64-linux-ubuntu/`) as prior
   art — same SDK release (v1.2.0), same card, same models.
 
 ## Unknowns — need answering before/during the move
@@ -66,5 +66,5 @@ be re-derived next time. Nothing below has been executed yet — this is what's 
 ## Where everything lives right now
 
 - Working copy: `~/Documents/workspace/RK1828-test/` on this Manjaro box.
-- Archived/shared copy: `git@github.com:csabakecskemeti/rk1828-x86.git` (`main` branch), folders
+- Archived/shared copy: `git@github.com:csabakecskemeti/rk1828-how-to.git` (formerly `rk1828-x86`) (`main` branch), folders
   `x86_64-linux-ubuntu/` (original) and `manjaro-x86_64-linux/` (this session's notes, pushed as `bb6857a`).

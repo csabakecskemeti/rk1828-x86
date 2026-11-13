@@ -232,3 +232,39 @@ A Raspberry Pi-class single board computer is good for educational and hobbyist 
 automation and embedded systems.
 ```
 Raw log: [`results/prompt-qwen3-1.7b.log`](results/prompt-qwen3-1.7b.log).
+
+## 9. Interactive chat ✅
+
+Same command without `--prompt` / `--once`:
+
+```bash
+cd ~/rk1828
+rknn3_llm_cli --model models/RK182X-LLM-Qwen3-1.7B/Qwen3-1.7B-w4a16-8-32256/Qwen3-1.7B.rknn --core-mask 0xff -n 1024
+```
+
+- Type at the `>` prompt. `/help` lists the in-chat commands, and **Ctrl+D** exits.
+- `-n` is the maximum reply length in tokens.
+- Qwen3 may start with a `<think>…</think>` block. Adding `/no_think` to a message usually skips it.
+- **The card holds one model at a time.** Exit the chat before a benchmark or another model, or the second one fails
+  with `MODEL_SETUP fail, ack = ACK_FAIL`.
+- Runs as a normal user. `sudo rknn-smi info -w` in a second window shows the card live while chatting.
+
+Tested 2026-11-12: works, replies are coherent and stream at about the benchmark speed.
+
+## Where things are on the board
+
+| Path | What |
+|---|---|
+| `/usr/bin/rknn3_llm_cli`, `rkllm3-server`, `rknn-smi`, `rknn-console`, `pcie_upgrade_tool` | from the deb |
+| `/usr/lib/firmware/rknn3_rk1820.img` | M.2 2280 firmware, loaded by `rknn3.service` at boot |
+| `/lib/modules/$(uname -r)/updates/dkms/pcie-rkep.ko` | driver, rebuilt by DKMS on kernel updates |
+| `~/rk1828/rknn3-rk182x-m2_v1.2.0_arm64.deb`, `SHA256SUMS` | the installed package |
+| `~/rk1828/x/` | unpacked copy of the deb, for reference only (safe to delete) |
+| `~/rk1828/scripts/download-models.sh`, `models/` | pinned model download + checksums |
+| `~/rk1828/.venv/` | `hf` CLI |
+| `~/rk1828/results/` | benchmark and prompt logs |
+
+## Next
+- [ ] Qwen3.5-4B and Qwen3-8B (`./scripts/download-models.sh qwen3.5-4b` / `qwen3-8b`), bench like x86
+- [ ] `rkllm3-server` (OpenAI-compatible API) with Qwen3.5-4B + vision, reachable from the LAN
+- [ ] Power: find the cause of the §5 hard reset (Orange Pi supply)

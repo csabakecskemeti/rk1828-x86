@@ -27,6 +27,8 @@ driver port and no hand-built tools.
 - [x] `sudo rknn-smi info` sees the card (Online, Health OK, 45 °C idle)
 - [x] Qwen3-1.7B downloaded on the board and SHA256-verified (matches the x86 test build)
 - [x] Bench Qwen3-1.7B (`--bench 128 128`): **115 tok/s / 2022 prefill**, on par with x86
+- [x] Interactive chat with `rknn3_llm_cli` (see log §9)
+- [ ] Qwen3.5-4B / Qwen3-8B
 - [ ] `rkllm3-server` with Qwen3.5-4B + vision
 
 Step-by-step with outputs: **[`BRINGUP_LOG.md`](BRINGUP_LOG.md)**.

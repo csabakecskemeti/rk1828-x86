@@ -141,3 +141,53 @@ Console started (Device: PCIE)    <- console into the card's own OS; Ctrl+X exit
 as the x86 bring-up. Card's external power: connected.
 
 
+
+## 6. `rknn-smi` usage (root only)
+
+Options go **after** a subcommand: `rknn-smi -l` only prints the help text, and as a normal user it prints nothing (exit 255).
+
+```bash
+sudo rknn-smi info              # summary
+sudo rknn-smi info -l           # topology
+sudo rknn-smi info -w           # live, refreshing
+sudo rknn-smi info -t <type>    # temp, power, voltage, memory, npu_freq, health, reset_reason, pcie_err, ...
+```
+
+```
+| rknn-smi      Version: 1.3.0                                                  |
+| Device        Status   | Health        | Power(mW)     | Npu(%)               |
+| Chip          Name     | Bus-Id        | Temp(C)       | Memory-Usage(MB)     |
+| 0             Online   | OK            | NA            | 0                    |
+| 0             RK1828   | 0000:01:00.0  | 45            | 32   / 5120          |
+```
+
+Idle: online and healthy, 45 °C, 32 MB of 5 GB used. Power reads `NA` on this M.2 module.
+
+## 7. Models
+
+Same pinned script as on x86 (`../x86_64-linux-ubuntu/scripts/download-models.sh`), copied to `~/rk1828/scripts/`
+with `models/checksums/` next to it, and `hf` in a venv (`~/rk1828/.venv`).
+
+### ⚠️ The §5 reset corrupted files written just before it
+The first attempt was cut off by the reset. After reboot the venv's files were still there but **0 bytes** (685 of
+2097). pip had written them seconds before the power loss, and the data never reached the SD card. `hf` then
+"succeeded" silently (exit 0, nothing downloaded), and `download-models.sh` only failed at the checksum step.
+
+- Checked everything written in that window. System files were fine: `dpkg --verify rknn3-rk182x-m2 dkms` is
+  clean and `pcie-rkep.ko` is intact. The only other 0-byte files were ones that are normally empty (dpkg
+  locks, tracker WALs, HF marker files).
+- Fix: `rm -rf .venv models/<model>/.cache`, recreate the venv, re-run the download. Lesson: after an unexpected
+  reset on an SD-card root, **check recent writes before trusting them**.
+
+### Qwen3-1.7B
+```
+$ ./scripts/download-models.sh qwen3-1.7b
+Qwen3-1.7B.embed.bin: OK      (622 MB)
+Qwen3-1.7B.rknn: OK
+Qwen3-1.7B.tokenizer.gguf: OK
+Qwen3-1.7B.weight: OK         (1.08 GB)
+...
+matches tested build
+```
+1.7 GB in about 40 s, with the card active. **No reset this time**, so the §5 reset doesn't reproduce simply
+from network plus SD-card load.

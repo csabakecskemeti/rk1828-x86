@@ -24,8 +24,8 @@ driver port and no hand-built tools.
 - [x] Install `dkms` and the deb
 - [x] Driver bound (`/dev/pcie-rkep-*`), firmware loaded by `rknn3.service` on every boot
 - [ ] **Board hard-reset under load once the card was active: check power** (see log §5)
-- [ ] `sudo rknn-smi info -l` sees the card
-- [ ] Copy models over and verify SHA256
+- [x] `sudo rknn-smi info` sees the card (Online, Health OK, 45 °C idle)
+- [x] Qwen3-1.7B downloaded on the board and SHA256-verified (matches the x86 test build)
 - [ ] Bench Qwen3-1.7B (`--bench 128 128`) and compare with x86
 - [ ] `rkllm3-server` with Qwen3.5-4B + vision
 

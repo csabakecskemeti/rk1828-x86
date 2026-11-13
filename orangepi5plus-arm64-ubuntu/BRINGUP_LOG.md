@@ -121,5 +121,23 @@ At 19:05, a minute after the install, the board **reset itself** while `hf downl
 - **Good news from the reboot:** `rknn3.service` reloaded the firmware by itself (`Downloading firmware OK` about
   40 s after power-on) and restarted the proxy, with no manual step.
 
-_To check: the card's external power connector, and the Orange Pi's own supply (needs a solid 5 V / 4 A USB-C)._
+_To check: the Orange Pi's own supply (needs a solid 5 V / 4 A USB-C). The card's external power is connected._
+
+### Firmware confirmed running (after the reset): `sudo rknn-console`
+
+```
+open rkep: /dev/pcie-rkep-0000:01:00.0 Success.
+ - id=182a1d87
+ - magic=524b4550, ver=2          <- "RKEP": firmware running
+ - rc_cc_version=30302
+ - ep_cc_version=30300
+ - bar2 bar2_phy_addr=0x1200000000
+ - gen2x1
+chip info: rk3588
+Console started (Device: PCIE)    <- console into the card's own OS; Ctrl+X exits
+```
+
+`rknn-console` (root) is the quickest "is the firmware alive" check: the same `magic=524b4550` / `ep_cc_version=30300`
+as the x86 bring-up. Card's external power: connected.
+
 

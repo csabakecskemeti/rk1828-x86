@@ -219,7 +219,7 @@ Raw log: [`results/bench-qwen3-1.7b-128x128.log`](results/bench-qwen3-1.7b-128x1
 | x86 Manjaro (Ryzen 5 5600GT, adapter card) | 2130 | 118 |
 | **Orange Pi 5 Plus (onboard M.2)** | **2022** | **115** |
 
-A €150-class ARM board drives the card as fast as the x86 desktops. Generation runs from the card's own memory, so
+An ARM single-board computer drives the card as fast as the x86 desktops. Generation runs from the card's own memory, so
 the host hardly matters once the model is loaded.
 
 The bench's generated text is nonsense (it once read "**[ERROR]** The system has encountered an error..."). That's

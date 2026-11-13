@@ -50,7 +50,16 @@ Nothing to do with the card, but it looks like "the board didn't come back" when
 `rknn3-rk182x-m2_v1.2.0_arm64.deb` from `../x86_64-linux-ubuntu/vendor/rockchip-rk182x-host-packages-v1.2.0/debs/`
 (sha256 `3bafc960…4ff620`, matches `SHA256SUMS`).
 
-Inspected before installing (`dpkg-deb -I`, `-c`, `-x`, `-e`):
+Copied to a working folder in the home directory (normal user, no sudo) and unpacked there for inspection:
+
+```bash
+ssh opi 'mkdir -p ~/rk1828'
+scp rknn3-rk182x-m2_v1.2.0_arm64.deb SHA256SUMS opi:rk1828/
+ssh opi 'cd ~/rk1828 && dpkg-deb -x rknn3-rk182x-m2_v1.2.0_arm64.deb x && dpkg-deb -e rknn3-rk182x-m2_v1.2.0_arm64.deb x/ctl'
+# ~/rk1828/x = reference copy of the package contents; not used at runtime, safe to delete
+```
+
+What it contains (`dpkg-deb -I`, `-c`, plus the unpacked scripts):
 
 - **Firmware:** `/usr/lib/firmware/rknn3_rk1820.img`, md5 `45dd70f436ae86af5283d01cc7bcb601`, the same
   **M.2 2280** image used on x86. So no separate firmware file is needed.
@@ -72,10 +81,45 @@ Inspected before installing (`dpkg-deb -I`, `-c`, `-x`, `-e`):
 ## 4. Install
 
 ```bash
-scp rknn3-rk182x-m2_v1.2.0_arm64.deb opi:rk1828/
 ssh -t opi 'cd ~/rk1828 && sudo apt-get install -y dkms \
   && sudo dpkg -i rknn3-rk182x-m2_v1.2.0_arm64.deb \
   && sudo systemctl disable --now rknn-mdns.service'
 ```
 
-_Result: pending._
+**Result: OK.** DKMS built `pcie-rkep` 3.3.1 into `/lib/modules/6.1.0-1025-rockchip/updates/dkms/` (unsigned, which is
+fine: the kernel has no module signing). The driver bound to the card (`/dev/pcie-rkep-0000:01:00.0`, root-only `0600`),
+and `rknn3.service` started. The postinst's `Failed to stop rknn3-firmware.service / rknn3-transfer-proxy.service ...
+not loaded` lines are just it removing units from older package versions, so they're harmless.
+
+Firmware load from `journalctl -u rknn3.service`:
+- before the load the card reported `magic=18` (uninitialised, the same state as x86 with no firmware)
+- `Device boot state: 0x00004c42` → writes `node2_os`, `node4_os` → `Reseting device...OK` → `Downloading firmware OK`
+- the proxy then started a per-card child, `rknn3_transfer_proxy_b98e6c51 -s 0000:01:00.0`, pinned to the A76 cores
+  (`mask 0xf0`)
+
+```
+$ rknn3_transfer_proxy devices
+Serial         Hash        Type
+0000:01:00.0   0xb98e6c51  PCIE
+```
+
+Notes:
+- **`[ETH] config file read failed ... /tmp/rk-mdns.ini`** repeats in the proxy log. That's the proxy looking for
+  network-attached cards, a file `rknn-mdns` would write. It's harmless with `rknn-mdns` disabled.
+- **`rknn-smi` needs root.** As a normal user it prints nothing and exits 255. Use `sudo rknn-smi info -l`. Its logs
+  are in `/var/log/rknn-smi.log*`.
+
+## 5. Unexpected hard reset during the first model download ⚠️
+
+At 19:05, a minute after the install, the board **reset itself** while `hf download` was fetching Qwen3-1.7B
+(network plus SD-card writes) with the card now running firmware.
+
+- The previous boot has no shutdown record, and its journal stops mid-activity. That points to **power loss or a
+  hard reset, not a kernel panic** (no new pstore entry).
+- The same board had already reset under full CPU load *before* the card was installed (an unrelated October NPU
+  test). So the supply was already marginal, and the active RK1828 adds load on the M.2 3.3 V rail.
+- **Good news from the reboot:** `rknn3.service` reloaded the firmware by itself (`Downloading firmware OK` about
+  40 s after power-on) and restarted the proxy, with no manual step.
+
+_To check: the card's external power connector, and the Orange Pi's own supply (needs a solid 5 V / 4 A USB-C)._
+

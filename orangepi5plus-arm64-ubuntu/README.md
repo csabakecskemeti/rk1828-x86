@@ -21,9 +21,10 @@ driver port and no hand-built tools.
 - [x] Card enumerates (`1d87:182a`, Gen2 x1)
 - [x] Prerequisites checked: kernel has no built-in RKEP, headers and compiler are present
 - [x] arm64 deb inspected; it bundles the M.2 2280 firmware
-- [ ] Install `dkms` and the deb
-- [ ] Driver bound, `/dev/pcie-rkep-*`, firmware `magic=524b4550`
-- [ ] `rknn-smi` sees the card
+- [x] Install `dkms` and the deb
+- [x] Driver bound (`/dev/pcie-rkep-*`), firmware loaded by `rknn3.service` on every boot
+- [ ] **Board hard-reset under load once the card was active: check power** (see log §5)
+- [ ] `sudo rknn-smi info -l` sees the card
 - [ ] Copy models over and verify SHA256
 - [ ] Bench Qwen3-1.7B (`--bench 128 128`) and compare with x86
 - [ ] `rkllm3-server` with Qwen3.5-4B + vision

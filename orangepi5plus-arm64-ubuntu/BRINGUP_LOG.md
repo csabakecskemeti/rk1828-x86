@@ -268,7 +268,7 @@ Tested 2026-11-12: works, replies are coherent and stream at about the benchmark
 - [x] Qwen3.5-4B and Qwen3-8B downloaded (§11, `GENTLE=1`)
 - [ ] Bench Qwen3.5-4B and Qwen3-8B like x86 (after the power fix)
 - [ ] `rkllm3-server` (OpenAI-compatible API) with Qwen3.5-4B + vision, reachable from the LAN
-- [ ] Power: find the cause of the §5 hard reset (Orange Pi supply)
+- [ ] Power: likely cause found (§10). Install the new cable + 5 V / 4 A supply, then verify with a CPU stress test and a normal `hf` download
 
 ## 10. Resets again (2026-11-13): investigation and cause ⚠️
 

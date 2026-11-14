@@ -30,7 +30,8 @@ driver port and no hand-built tools.
 - [x] Bench Qwen3-1.7B (`--bench 128 128`): **115 tok/s / 2022 prefill**, on par with x86
 - [x] Interactive chat with `rknn3_llm_cli` (see log §9)
 - [x] Qwen3.5-4B downloaded and verified (gentle mode)
-- [ ] Qwen3-8B (downloading), bench both
+- [x] Qwen3-8B downloaded and verified (gentle mode)
+- [ ] Bench Qwen3.5-4B and Qwen3-8B on the Orange Pi (after the power fix)
 - [ ] `rkllm3-server` with Qwen3.5-4B + vision
 
 Step-by-step with outputs: **[`BRINGUP_LOG.md`](BRINGUP_LOG.md)**.

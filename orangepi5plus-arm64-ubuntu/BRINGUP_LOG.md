@@ -362,7 +362,7 @@ Results:
 | Model | Size | Time at 4 MB/s | Result |
 |---|---:|---:|---|
 | Qwen3.5-4B (`RKNNAI/RK1828-LLM-Qwen3.5-4B` @ `1141896…`) | 4.0 GB | ~17 min | `ALL-OK`, no reset, load ≤0.4 |
-| Qwen3-8B (`RKNNAI/RK1828-LLM-Qwen3-8B` @ `fe66e24…`) | ~5.8 GB | ~25 min | _in progress_ |
+| Qwen3-8B (`RKNNAI/RK1828-LLM-Qwen3-8B` @ `fe66e24…`) | 5.8 GB | ~23 min | `ALL-OK`, no reset |
 
 Tip for chaining downloads: wait on the PID (`while kill -0 <pid>; do sleep 15; done; ...`), **not** on
 `pgrep -f <name>`, which matches the waiting shell's own command line and waits forever (same trap as

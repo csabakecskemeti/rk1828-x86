@@ -23,12 +23,14 @@ driver port and no hand-built tools.
 - [x] arm64 deb inspected; it bundles the M.2 2280 firmware
 - [x] Install `dkms` and the deb
 - [x] Driver bound (`/dev/pcie-rkep-*`), firmware loaded by `rknn3.service` on every boot
-- [ ] **Board hard-reset under load once the card was active: check power** (see log §5)
+- [x] **Board resets under load: likely cause found** (to confirm after the fix): no USB-PD on the Orange Pi power port + long cable chain (log §10). Fix ordered
+- [x] Low-load download mode: `GENTLE=1 SCREEN_OFF=1 download-models.sh` (log §11)
 - [x] `sudo rknn-smi info` sees the card (Online, Health OK, 45 °C idle)
 - [x] Qwen3-1.7B downloaded on the board and SHA256-verified (matches the x86 test build)
 - [x] Bench Qwen3-1.7B (`--bench 128 128`): **115 tok/s / 2022 prefill**, on par with x86
 - [x] Interactive chat with `rknn3_llm_cli` (see log §9)
-- [ ] Qwen3.5-4B / Qwen3-8B
+- [x] Qwen3.5-4B downloaded and verified (gentle mode)
+- [ ] Qwen3-8B (downloading), bench both
 - [ ] `rkllm3-server` with Qwen3.5-4B + vision
 
 Step-by-step with outputs: **[`BRINGUP_LOG.md`](BRINGUP_LOG.md)**.

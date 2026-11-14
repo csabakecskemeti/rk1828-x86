@@ -268,3 +268,103 @@ Tested 2026-11-12: works, replies are coherent and stream at about the benchmark
 - [ ] Qwen3.5-4B and Qwen3-8B (`./scripts/download-models.sh qwen3.5-4b` / `qwen3-8b`), bench like x86
 - [ ] `rkllm3-server` (OpenAI-compatible API) with Qwen3.5-4B + vision, reachable from the LAN
 - [ ] Power: find the cause of the §5 hard reset (Orange Pi supply)
+
+## 10. Resets again (2026-11-13): investigation and cause ⚠️
+
+After ~20 h of stable running, the board reset during the Qwen3.5-4B download (`hf download`), then **boot-looped
+three times**, each boot dying ~20 s in, before it stayed up on the fifth try. All checks below are read-only and
+can be run in parallel on the board.
+
+### Step 1: which boots ended without a shutdown
+```bash
+journalctl --list-boots --no-pager | tail -8
+last -x reboot shutdown | head -10      # a "reboot" with no "shutdown" before it = crash / power loss
+```
+| Boot | Ran | Ended |
+|---|---|---|
+| −4 | 15:33 → 17:00:59 | **no shutdown: during the `hf` download** |
+| −3 / −2 / −1 | 15 s, 18 s, 15 s each | **no shutdown: boot loop** |
+| 0 | 17:04 → | stable |
+
+### Step 2: last lines of each failed boot
+```bash
+for b in -3 -2 -1; do echo "== boot $b"; journalctl -b $b -o short-monotonic --no-pager | tail -6; done
+```
+All three died **~20-22 s after boot**, mid-startup: Docker starting the websearch containers, **GNOME starting
+(the rack screen switches on)**, cloudflared connecting. No error, panic or warning: the log just stops, which is
+what a power cut looks like. (`error unmounting container` = Docker cleaning up after the unclean stop.)
+
+### Step 3: the card, and kernel warnings
+```bash
+for b in -3 -2 -1; do journalctl -b $b -u rknn3.service -o short-monotonic --no-pager | grep -E "Downloading firmware OK|started proxy"; done
+for b in -4 -3 -2 -1; do journalctl -b $b -k -p warning -o short-monotonic --no-pager | grep -i -E "volt|regulat|therm|pcie|mmc|power|reset" | tail -5; done
+```
+- Firmware loaded fine ~8 s into each failed boot, ~10 s **before** each death, so the load itself isn't the trigger.
+- Kernel warnings (`vop2 ... power_domain_off timeout`, `dummy regulator`, `pcie_rkep ... taints kernel`) are
+  **identical in the good boot** (step 4: `journalctl -b 0 -k -p warning ...`), so they're background noise.
+
+### Step 5-6: what the USB-C port is doing
+```bash
+cat /sys/class/power_supply/tcpm-source-psy-6-0022/uevent
+cat /sys/class/typec/port0/power_role                               # [source] = the board supplies power OUT
+grep -H . /sys/class/usb_power_delivery/*/source-capabilities/*/{voltage,maximum_current} 2>/dev/null
+for s in /sys/class/drm/card*-*/status; do echo "$s: $(cat $s)"; done   # DP-1 connected = screen on USB-C (DP Alt Mode)
+```
+- That USB-C port is the **full-function** one, not the power input. The board is the **source**: it powers the
+  rack screen (GeeekPi/DeskPi 6.91" 1U touch screen, DisplayPort over USB-C + USB touch), offering 5 V / 3 A. The
+  screen's own spec is 5 V / 1 A, **≤4 W**.
+- The board's own power input isn't visible to software.
+
+### Likely cause (to confirm once the fix is in)
+1. **The Orange Pi 5 Plus power port has no USB-PD.** Orange Pi's wiki, section 2.17
+   ([link](http://www.orangepi.org/orangepiwiki/index.php/Orange_Pi_5_Plus#Instructions_for_using_the_5v_pin_in_the_40pin_interface_of_the_development_board_to_supply_power)):
+   *"the development board Without the PD function, the general mobile phone charging head can only output the
+   lowest 5V/2A"*. Our supply was a 45 W dual-port PD charger, so the board likely got **5 V / 2-3 A (10-15 W)**
+   instead of the 5 V / 4 A it's specified for.
+2. **A long feed chain** for rack layout: 1 m cable → keystone USB-C coupler → 2 cm "USB 2.0 data" flat cable →
+   board. Four plug/socket joints plus a thin cable, so voltage sags further at load peaks.
+3. On top: the rack screen (~4 W) from the board's budget; a burst of CPU, 2.5 GbE and SD writes from `hf`'s
+   parallel download; or the boot-time burst (Docker + GNOME + screen on). Any of these tips it over.
+
+### Fix (ordered 2026-11-13)
+- One continuous short 90° USB-C cable (PD 65 W rated) through the keystone hole with a printed filler, replacing
+  the coupler and the 2 cm cable.
+- A **fixed 5 V / 4 A** (or 5 A) USB-C supply, not a PD charger.
+- Alternative, documented by Orange Pi (same wiki section 2.17): feed **5 V into the 40-pin header** (5 V + GND
+  pins) from a 5 V / 4-5 A supply. Regulated 5.0-5.1 V only, check polarity, never together with the USB-C input.
+
+_To verify after the fix: CPU stress test with the screen on, then a normal `hf` download._
+
+## 11. Gentle download (works on the weak supply)
+
+Until the fix arrives, downloads use a low-load mode, now built into the repo's script:
+
+```bash
+GENTLE=1 SCREEN_OFF=1 ./scripts/download-models.sh qwen3.5-4b     # RATE=4M default
+```
+- **`curl` instead of `hf`**: one file at a time, one connection, `--limit-rate 4M`, under `nice -n 19 ionice -c3`
+  (lowest CPU and disk priority), `sync` after each file.
+- **Resumable**: `curl -C -`. If it's interrupted, re-run and it continues. Re-running on complete files is a no-op.
+- **`SCREEN_OFF=1`** blanks the rack screen through GNOME (`org.gnome.Mutter.DisplayConfig PowerSaveMode` 1 = off,
+  0 = on) and turns it back on when the script exits. ⚠️ **The dark screen looks like a crash** if you don't know
+  it's intentional. To turn it back on by hand:
+  ```bash
+  XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus \
+    busctl --user set-property org.gnome.Mutter.DisplayConfig /org/gnome/Mutter/DisplayConfig \
+    org.gnome.Mutter.DisplayConfig PowerSaveMode i 0
+  ```
+- Checksums come from `models/checksums/` (recorded on x86), not from the download itself.
+
+Before re-running after a reset, clear what the reset damaged: the `hf` attempt that crashed left its small files
+**0 bytes** again, plus stale `.cache/huggingface` locks (same as §7).
+
+Results:
+| Model | Size | Time at 4 MB/s | Result |
+|---|---:|---:|---|
+| Qwen3.5-4B (`RKNNAI/RK1828-LLM-Qwen3.5-4B` @ `1141896…`) | 4.0 GB | ~17 min | `ALL-OK`, no reset, load ≤0.4 |
+| Qwen3-8B (`RKNNAI/RK1828-LLM-Qwen3-8B` @ `fe66e24…`) | ~5.8 GB | ~25 min | _in progress_ |
+
+Tip for chaining downloads: wait on the PID (`while kill -0 <pid>; do sleep 15; done; ...`), **not** on
+`pgrep -f <name>`, which matches the waiting shell's own command line and waits forever (same trap as
+`../x86_64-linux-ubuntu/docs/TRIED_AND_FAILED.md` §6). Start it with `setsid nohup ... < /dev/null &` so it
+survives the SSH session ending.
